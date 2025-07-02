@@ -1,11 +1,17 @@
-import { Button } from "./components/ui/button";
+import { Outlet } from "react-router-dom";
+import { Navbar } from "./components/shared/Navbar";
+import { Footer } from "./components/shared/Footer";
 
 function App() {
   return (
     <>
-      <div className="flex min-h-svh flex-col items-center justify-center">
-        <Button className="bg-amber-950 text-white">Click me</Button>
-      </div>
+   <div className="min-h-screen bg-gray-100 flex flex-col">
+      <Navbar />
+      <main className="flex-grow container mx-auto p-4">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
     </>
   );
 }
