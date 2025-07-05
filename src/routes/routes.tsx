@@ -5,6 +5,7 @@ import { createBrowserRouter } from "react-router-dom";
 import AddBookPage from "@/pages/AddBookPage";
 import BorrowSummaryPage from "@/pages/BorrowSummaryPage";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
+import { EditBookPage } from "@/pages/EditBookPage";
 
 const router = createBrowserRouter([
   {
@@ -21,8 +22,12 @@ const router = createBrowserRouter([
         element: <AllBookPage></AllBookPage>,
       },
       {
-        path: "add-book",
+        path: "create-book",
         element: <AddBookPage />,
+      },
+      {
+        path: "edit-book/:id",
+        element: <EditBookPage></EditBookPage>
       },
       {
         path: "borrow-summary",

@@ -21,7 +21,7 @@ export const Navbar = () => {
           </li>
           <li>
             <Link
-              to="/add-book"
+              to="/create-book"
               className="text-white text-lg font-medium hover:text-blue-200 transition-colors p-2 rounded-md hover:bg-blue-600"
             >
               Add Book

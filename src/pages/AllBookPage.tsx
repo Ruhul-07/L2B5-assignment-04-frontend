@@ -1,188 +1,264 @@
-// import { Button } from "@/components/ui/button";
-// const AllBookPage = () => {
-//   // In my application, you would fetch book data here 
-
-
-//   return (
-//     <div className="p-8 bg-white shadow-md rounded-lg">
-//       <h1 className="text-3xl font-bold text-gray-800 mb-6">All Books</h1>
-
-//       {/* Placeholder for your Book Table/List/Grid */}
-//       <div className="border border-gray-300 rounded-lg p-6 bg-gray-50 text-gray-600 text-center">
-//         <p className="mb-4">This is where your **Book Table/List/Grid** will be displayed.</p>
-//         <p className="mb-4">You will fetch and render your list of books here, along with actions like:</p>
-//         <ul className="list-disc list-inside text-left mx-auto max-w-sm">
-//           <li>View Book Details</li>
-//           <li>Edit Book</li>
-//           <li>Delete Book</li>
-//           <li>Mark as Borrowed/Returned</li>
-//           {/* Add more core actions as needed */}
-//         </ul>
-//         <p className="mt-4 text-sm italic">Start building your book display here!</p>
-//       </div>
-//       <Button className="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-//         Add New Book
-//       </Button>
-//     </div>
-//   );
-// };
-// export default AllBookPage;
-
-
-
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '../components/ui/button'; // Assuming Shadcn Button is available
-import { Input } from '../components/ui/input';   // Assuming Shadcn Input is available
+import { Link} from 'react-router-dom';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { useGetBooksQuery, useDeleteBookMutation } from '@/services/booksApi';
 
+// Import types
+import type { Book, ApiResponse } from '../types/index';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from '../components/ui/dialog';
+import { toast } from 'sonner';
+import { BorrowBookForm } from '@/components/shared/BorrowBookForm';
 
 export const AllBookPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
+  const [bookToDeleteId, setBookToDeleteId] = useState<string | null>(null);
 
-  // Dummy book data for demonstration purposes
-  const dummyBooks = [
-    { id: '1', title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', genre: 'Classic', borrowed: false },
-    { id: '2', title: '1984', author: 'George Orwell', genre: 'Dystopian', borrowed: true },
-    { id: '3', title: 'To Kill a Mockingbird', author: 'Harper Lee', genre: 'Fiction', borrowed: false },
-    { id: '4', title: 'The Hobbit', author: 'J.R.R. Tolkien', genre: 'Fantasy', borrowed: false },
-    { id: '5', title: 'Pride and Prejudice', author: 'Jane Austen', genre: 'Romance', borrowed: true },
-    { id: '6', title: 'Dune', author: 'Frank Herbert', genre: 'Sci-Fi', borrowed: false },
-    { id: '7', title: 'The Catcher in the Rye', author: 'J.D. Salinger', genre: 'Fiction', borrowed: true },
-  ];
+  // State for Borrow Form Dialog
+  const [showBorrowDialog, setShowBorrowDialog] = useState(false);
+  const [selectedBookForBorrow, setSelectedBookForBorrow] = useState<Book | null>(null);
 
-  // Filter books based on search term (case-insensitive, checks title and author)
-  const filteredBooks = dummyBooks.filter(book =>
+  // Fetch books using RTK Query hook
+  const { data: apiResponse, isLoading, isError, error } = useGetBooksQuery();
+  // Get the delete mutation hook
+  const [deleteBook, { isLoading: isDeleting }] = useDeleteBookMutation();
+
+  // Extract the actual array of books from the API response object
+  const allBooks: Book[] | undefined = apiResponse?.data;
+
+  // Handle loading state
+  if (isLoading) {
+    return <div className="p-4 text-center text-lg font-medium">Loading books...</div>;
+  }
+
+  // Handle error state for fetching books
+  if (isError) {
+    let errorMessage = 'An unknown error occurred while loading books.';
+    if (error && 'status' in error) {
+      const apiError = error as FetchBaseQueryError;
+      if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
+        const backendError = apiError.data as ApiResponse;
+        errorMessage = backendError.message || backendError.error || errorMessage;
+      } else if (typeof apiError.error === 'string') {
+        errorMessage = apiError.error;
+      }
+    } else if (error && 'message' in error) {
+      errorMessage = error.message;
+    }
+    return <div className="p-4 text-center text-red-600 font-semibold">Error: {errorMessage}</div>;
+  }
+
+  // Handle case where no book data is available or invalid format
+  if (!allBooks || !Array.isArray(allBooks)) {
+    return <div className="p-4 text-center text-gray-500">No book data available or invalid data format received.</div>;
+  }
+
+  // Filter books based on search term
+  const filteredBooks = allBooks.filter(book =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    book.author.toLowerCase().includes(searchTerm.toLowerCase())
+    book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    book.genre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    book.isbn.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Function to handle delete button click (opens confirmation dialog)
+  const handleDeleteClick = (bookId: string) => {
+    setBookToDeleteId(bookId);
+    setShowConfirmDeleteDialog(true);
+  };
+
+  // Function to confirm and execute deletion
+  const confirmDelete = async () => {
+    if (!bookToDeleteId) return;
+
+    try {
+      await deleteBook(bookToDeleteId).unwrap();
+      toast.success('Book deleted successfully!');
+      setShowConfirmDeleteDialog(false);
+      setBookToDeleteId(null);
+    } catch (err) {
+      let errorMessage = 'Failed to delete book.';
+      if (err && 'status' in err) {
+        const apiError = err as FetchBaseQueryError;
+        if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
+          const backendError = apiError.data as ApiResponse;
+          errorMessage = backendError.message || backendError.error || errorMessage;
+        } else if (typeof apiError.error === 'string') {
+          errorMessage = apiError.error;
+        }
+      } else if (err && 'message' in err) {
+        errorMessage = err.message;
+      }
+      toast.error(`Error: ${errorMessage}`);
+      setShowConfirmDeleteDialog(false);
+    }
+  };
+
+  // Function to handle borrow button click (opens borrow form dialog)
+  const handleBorrowClick = (book: Book) => {
+    setSelectedBookForBorrow(book);
+    setShowBorrowDialog(true);
+  };
+
+  const handleCloseBorrowDialog = () => {
+    setShowBorrowDialog(false);
+    setSelectedBookForBorrow(null);
+  };
+
   return (
-    <div className="space-y-12 pb-12"> {/* Overall spacing for sections */}
+    <div className="container mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">All Books</h1>
 
-      {/* Hero Section: Explains the website's purpose */}
-      <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-8 sm:p-12 rounded-lg shadow-2xl text-center">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-4 leading-tight">
-          Your Personal Book Management Hub
-        </h1>
-        <p className="text-lg sm:text-xl opacity-90 max-w-3xl mx-auto mb-8">
-          Organize your literary world with ease. Track your collection, manage borrowed books,
-          and discover new reads all in one place.
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Link to="#book-collection"> {/* Link to the book collection section below */}
-            <Button className="bg-white text-blue-700 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
-              View My Books
-            </Button>
-          </Link>
-          <Link to="/add-book">
-            <Button variant="outline" className="border-2 border-white text-white hover:bg-blue-700 px-8 py-4 text-lg font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
-              Add a New Book
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Feature Overview Section (Optional but helpful for understanding) */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center px-4">
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <svg className="mx-auto mb-4 text-blue-600" width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-6h-2v6zm0-8h2V7h-2v2z"/>
-          </svg>
-          <h3 className="text-xl font-semibold mb-2 text-gray-800">Organize Your Collection</h3>
-          <p className="text-gray-600">Keep track of every book you own, with details like author, genre, and status.</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <svg className="mx-auto mb-4 text-blue-600" width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-6h-2v6zm0-8h2V7h-2v2z"/>
-          </svg>
-          <h3 className="text-xl font-semibold mb-2 text-gray-800">Track Borrowed Books</h3>
-          <p className="text-gray-600">Easily see which books are currently borrowed and by whom.</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <svg className="mx-auto mb-4 text-blue-600" width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-6h-2v6zm0-8h2V7h-2v2z"/>
-          </svg>
-          <h3 className="text-xl font-semibold mb-2 text-gray-800">Quick Access & Search</h3>
-          <p className="text-gray-600">Find any book in your library instantly with powerful search.</p>
-        </div>
-      </section>
-
-
-      {/* Book Collection Section (Your original table, now with a clear heading) */}
-      <section id="book-collection" className="p-6 sm:p-8 bg-white shadow-xl rounded-lg border border-gray-200">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Browse Your Collection</h2>
-          <Link to="/add-book">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md shadow-md transition-all duration-200">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <Input
+          type="text"
+          placeholder="Search by title, author, genre, or ISBN..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-md w-full"
+        />
+        <div className="flex gap-2">
+          <Link to="/create-book">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors duration-200">
               Add New Book
             </Button>
           </Link>
+          <Link to="/borrow-summary">
+            <Button variant="outline" className="px-6 py-2 rounded-md transition-colors duration-200">
+              View Borrow Summary
+            </Button>
+          </Link>
         </div>
+      </div>
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <Input
-            type="text"
-            placeholder="Search by title or author..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full max-w-lg p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-          />
-        </div>
-
-        {/* Book Table/List/Grid Display */}
-        <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-          {filteredBooks.length > 0 ? (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Title
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Author
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Genre
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+      {/* Render the table view */}
+      {filteredBooks.length > 0 ? (
+        <div className="overflow-x-auto border border-gray-200 rounded-md shadow-sm">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Title
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Author
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Genre
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ISBN
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Copies
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Availability
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredBooks.map((book) => (
+                <tr key={book._id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{book.title}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{book.author}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{book.genre}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{book.isbn}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{book.copies}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      book.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {book.available ? 'Available' : 'Unavailable'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    {/* Edit Button */}
+                    <Link to={`/edit-book/${book._id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-indigo-600 hover:text-indigo-900 p-1"
+                      >
+                        Edit
+                      </Button>
+                    </Link>
+                    {/* Delete Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-900 ml-2 p-1"
+                      onClick={() => handleDeleteClick(book._id)}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting && bookToDeleteId === book._id ? 'Deleting...' : 'Delete'}
+                    </Button>
+                    {/* Borrow Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-blue-600 hover:text-blue-900 ml-2 p-1"
+                      onClick={() => handleBorrowClick(book)}
+                      disabled={!book.available || book.copies === 0}
+                    >
+                      Borrow
+                    </Button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredBooks.map((book) => (
-                  <tr key={book.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{book.title}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{book.author}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{book.genre}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        book.borrowed ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                      }`}>
-                        {book.borrowed ? 'Borrowed' : 'Available'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="ghost" className="text-blue-600 hover:text-blue-900 p-1">View</Button>
-                      <Button variant="ghost" className="text-indigo-600 hover:text-indigo-900 ml-2 p-1">Edit</Button>
-                      <Button variant="ghost" className="text-red-600 hover:text-red-900 ml-2 p-1">Delete</Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="p-6 text-center text-gray-500">
-              No books found matching your search.
-            </div>
-          )}
+              ))}
+            </tbody>
+          </table>
         </div>
-      </section>
+      ) : (
+        <p className="p-6 text-center text-gray-500">No books found matching your search criteria.</p>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showConfirmDeleteDialog} onOpenChange={setShowConfirmDeleteDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this book? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Borrow Book Form Dialog */}
+      {selectedBookForBorrow && (
+        <BorrowBookForm
+          book={selectedBookForBorrow}
+          isOpen={showBorrowDialog}
+          onClose={handleCloseBorrowDialog}
+        />
+      )}
     </div>
   );
 };

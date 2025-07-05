@@ -1,69 +1,192 @@
-# React + TypeScript + Vite
+📚 Library Management Application(Frontend)
+A modern, responsive web application serving as the user interface for a comprehensive library management system. It allows users to browse, add, edit, delete, and borrow books, as well as view a summary of borrowed items.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+✨ Features
+This frontend application provides the following core functionalities:
 
-Currently, two official plugins are available:
+Book Management (CRUD UI):
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Add New Books: User-friendly form to add new book entries with various details.
 
-## Expanding the ESLint configuration
+View Books:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Homepage (Card View): A visually appealing landing page displaying books as interactive cards, ideal for browsing. Includes a search bar to filter books.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+All Books Page (Table View): A dedicated page providing a detailed, tabular list of all books, also with search, offering a comprehensive overview.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+Edit Existing Books: Intuitive forms to update book details, including availability based on copies.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Delete Books: Confirmation dialogs for safely removing book entries from the collection.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Borrowing System Interface:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Borrow Books: Users can initiate borrowing directly from book cards or table rows via a modal form.
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Quantity & Due Date Input: Collects required information for borrowing.
+
+Real-time Updates: Reflects changes in book availability immediately after a successful borrow.
+
+Borrow Summary Display:
+
+Aggregated View: A dedicated page displaying a clear, aggregated summary of all borrowed books, showing the total quantity borrowed for each distinct book.
+
+Responsive Design: Optimized for seamless experience across various devices (desktop, tablet, mobile) using Tailwind CSS.
+
+User Notifications: Utilizes Sonner for sleek, dismissible toast notifications for actions like success messages or errors, enhancing user feedback.
+
+Robust Error Handling: Comprehensive error display for API failures, providing clear feedback to the user.
+
+🚀 Technologies Used
+This frontend project is built using a modern React ecosystem:
+
+React.js: A JavaScript library for building dynamic user interfaces.
+
+TypeScript: A typed superset of JavaScript that compiles to plain JavaScript, enhancing code quality and maintainability.
+
+Vite: A next-generation frontend tooling that provides an extremely fast development server and optimized build process.
+
+Redux Toolkit (RTK Query): For efficient global state management and simplified data fetching, caching, and invalidation from the backend API.
+
+React Router DOM: For declarative routing within the single-page application.
+
+Tailwind CSS: A utility-first CSS framework for rapidly building custom designs and responsive layouts.
+
+Shadcn UI: A collection of beautifully designed, accessible, and customizable UI components built with Radix UI and Tailwind CSS.
+
+Sonner: A beautifully designed toast notification library for user feedback.
+
+date-fns: A lightweight and consistent date utility library for parsing, formatting, and manipulating dates.
+
+Lucide React: A comprehensive collection of beautiful, pixel-perfect icons used throughout the application.
+
+🏁 Getting Started
+Follow these instructions to get the frontend application up and running on your local machine for development and testing.
+
+Prerequisites
+Node.js (LTS version recommended)
+
+npm (comes with Node.js) or Yarn
+
+Your backend API must be running and accessible (either locally or deployed).
+
+Installation Steps
+Clone the Frontend Repository:
+
+git clone <your-frontend-repo-url>
+cd Library-Management-Frontend # Or your frontend project folder name
+
+Install Dependencies:
+
+npm install
+# or yarn install
+
+This will install all the necessary React, Redux, Tailwind, and other libraries.
+
+Create .env File:
+Create a file named .env (or .env.local for Vite) in the root of your frontend project and add the following:
+
+VITE_REACT_APP_API_BASE_URL="http://localhost:5000/api"
+
+VITE_REACT_APP_API_BASE_URL: This should point to your backend API.
+
+If your backend is running locally, use http://localhost:5000/api.
+
+If your backend is deployed (e.g., on Vercel or Render), use its deployed API URL (e.g., https://your-backend-app.vercel.app/api).
+
+Run the Frontend Application:
+
+npm run dev
+# or yarn dev
+
+The frontend application should open in your browser, typically at http://localhost:5173.
+
+Deployment (Optional, Recommended for Production)
+For production, you can deploy your frontend to platforms like Vercel, Netlify, Render, etc. These platforms offer excellent integration with Git repositories and provide global CDNs for fast delivery.
+
+Vercel: Excellent for React apps. Just link your Git repository on Vercel.
+
+Netlify: Another popular choice for static sites and SPAs.
+
+💡 Usage
+Once the frontend application is running:
+
+Homepage (/): You will land on the HomePage displaying your book collection in a visually appealing card view.
+
+Use the integrated search bar to filter books by title, author, genre, or ISBN.
+
+Each book card provides direct "Edit", "Delete", and "Borrow" buttons.
+
+Add New Book (/add-book): Click the "Add New Book" button (available on the homepage) to navigate to the dedicated form.
+
+Edit Book (/edit-book/:id): Click "Edit" on a book card to open the edit form for that specific book.
+
+Delete Book: Click "Delete" on a book card. A confirmation dialog will appear. Confirm to remove the book; the list will automatically update.
+
+Borrow Book: Click "Borrow" on a book card. A modal form will appear. Enter the desired quantity and due date. The book's available copies will update in real-time, and if copies reach zero, it will be marked "Unavailable."
+
+View All Books (/books): Click "Explore My Library (Table View)" on the homepage to switch to the traditional tabular list of all books.
+
+Borrow Summary (/borrow-summary): Click "View Borrow Summary" to navigate to a page displaying an aggregated list of all borrowed books, showing total quantities.
+
+📂 Project Structure (High-Level)
+Library-Management-Frontend/
+├── public/
+├── src/
+│   ├── assets/
+│   ├── components/
+│   │   ├── ui/          # Shadcn UI components (generated by npx shadcn-ui)
+│   │   ├── shared/      # Shared components (e.g., BorrowBookForm, NotFoundPage)
+│   │   └── BookCardView.tsx # Component for displaying books as cards
+│   ├── pages/
+│   │   ├── HomePage.tsx       # Landing page (card view, all functionality)
+│   │   ├── AllBookPage.tsx    # Tabular view of all books
+│   │   ├── AddBookPage.tsx    # Form to add a new book
+│   │   ├── EditBookPage.tsx   # Form to edit an existing book
+│   │   └── BorrowSummaryPage.tsx # Page to display borrow summary
+│   ├── redux/
+│   │   ├── api/
+│   │   │   └── api.ts   # Base RTK Query API setup
+│   │   └── store.ts     # Redux store configuration
+│   ├── routes/
+│   │   └── routes.tsx   # React Router DOM configuration
+│   ├── services/
+│   │   └── booksApi.ts  # RTK Query endpoints for books and borrows
+│   ├── types/
+│   │   └── index.ts     # TypeScript interfaces and types
+│   ├── App.tsx          # Main App component (often a layout wrapper)
+│   └── main.tsx         # Entry point for React app
+├── .env                 # Environment variables for local development
+├── index.css            # Global CSS styles (likely includes Tailwind directives)
+├── package.json
+├── tsconfig.json        # TypeScript configuration (includes path aliases)
+├── vite.config.ts       # Vite configuration
+└── README.md
+
+🤝 Contributing
+Contributions are welcome! If you have suggestions for improvements or find any issues, please feel free to:
+
+Fork the repository.
+
+Create a new branch (git checkout -b feature/your-feature-name).
+
+Make your changes.
+
+Commit your changes (git commit -m 'feat: Add new feature').
+
+Push to the branch (git push origin feature/your-feature-name).
+
+Open a Pull Request.
+
+📄 License
+This project is licensed under the MIT License - see the LICENSE file for details (if you have one in your project).
+
+🙏 Acknowledgments
+React
+
+Redux Toolkit
+
+Tailwind CSS
+
+Shadcn UI
+
+And all the open-source contributors whose tools made this project possible!
