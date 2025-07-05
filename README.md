@@ -4,29 +4,29 @@ A modern, responsive web application for managing a library's book collection, f
 ✨ Features
 Book Management:
 
-Add Books: Form for new book entries.
+➕ Add Books: Form for new book entries.
 
-View Books: Homepage (Card View) for browsing, dedicated page (Table View) for detailed lists. Both include search.
+👀 View Books: Homepage (Card View) for browsing, dedicated page (Table View) for detailed lists. Both include search.
 
-Edit Books: Update book details and availability.
+✏️ Edit Books: Update book details and availability.
 
-Delete Books: Remove books with confirmation.
+🗑️ Delete Books: Remove books with confirmation.
 
 Borrowing System:
 
-Borrow Books: Modal form for borrowing from book lists.
+🤝 Borrow Books: Modal form for borrowing from book lists.
 
-Quantity & Due Date: Input for borrow details.
+🔢 Quantity & Due Date: Input for borrow details.
 
-Real-time Updates: Book availability updates instantly.
+🔄 Real-time Updates: Book availability updates instantly.
 
-Borrow Summary: Dedicated page for aggregated borrowed book data.
+📊 Borrow Summary: Dedicated page for aggregated borrowed book data.
 
-Responsive Design: Optimized for all devices using Tailwind CSS.
+📱 Responsive Design: Optimized for all devices using Tailwind CSS.
 
-User Notifications: Sonner toasts for feedback.
+🔔 User Notifications: Sonner toasts for feedback.
 
-Error Handling: Clear display of API errors.
+🚨 Error Handling: Clear display of API errors.
 
 🚀 Technologies Used
 React.js: UI library.
@@ -84,14 +84,14 @@ Library-Management-Frontend/
 └── README.md
 
 🏁 Installation & Setup
-Prerequisites
+🛠️ Prerequisites
 Node.js (LTS)
 
 npm or Yarn
 
 Backend API running and accessible.
 
-Installation Steps
+⚙️ Installation Steps
 Clone Repository:
 
 git clone <your-frontend-repo-url>
