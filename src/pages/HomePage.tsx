@@ -5,8 +5,8 @@ import { Input } from '../components/ui/input';
 import { useGetBooksQuery, useDeleteBookMutation } from '@/services/booksApi';
 
 // Import types
-import type { Book, ApiResponse } from '../types/index';
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import type { Book } from '../types/index';
+import { getErrorMessage } from '@/utils/typeGuards';
 
 import {
   Dialog,
@@ -19,8 +19,10 @@ import {
 } from '../components/ui/dialog';
 
 import { toast } from 'sonner';
+
 import { BorrowBookForm } from '@/components/shared/BorrowBookForm';
-import BookCardView  from '../components/shared/BookCardView';
+
+import { BookCardView } from '../components/shared/BookCardView';
 
 const HomePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,18 +48,7 @@ const HomePage: React.FC = () => {
 
   // Handle error state for fetching books
   if (isError) {
-    let errorMessage = 'An unknown error occurred while loading books.';
-    if (error && 'status' in error) {
-      const apiError = error as FetchBaseQueryError;
-      if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
-        const backendError = apiError.data as ApiResponse;
-        errorMessage = backendError.message || backendError.error || errorMessage;
-      } else if (typeof apiError.error === 'string') {
-        errorMessage = apiError.error;
-      }
-    } else if (error && 'message' in error) {
-      errorMessage = error.message;
-    }
+    const errorMessage = getErrorMessage(error); // Use the utility function
     return <div className="p-4 text-center text-red-600 font-semibold">Error: {errorMessage}</div>;
   }
 
@@ -74,7 +65,7 @@ const HomePage: React.FC = () => {
     book.isbn.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Function to handle delete button click
+  // Function to handle delete button click (opens confirmation dialog)
   const handleDeleteClick = (bookId: string) => {
     setBookToDeleteId(bookId);
     setShowConfirmDeleteDialog(true);
@@ -90,24 +81,13 @@ const HomePage: React.FC = () => {
       setShowConfirmDeleteDialog(false);
       setBookToDeleteId(null);
     } catch (err) {
-      let errorMessage = 'Failed to delete book.';
-      if (err && 'status' in err) {
-        const apiError = err as FetchBaseQueryError;
-        if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
-          const backendError = apiError.data as ApiResponse;
-          errorMessage = backendError.message || backendError.error || errorMessage;
-        } else if (typeof apiError.error === 'string') {
-          errorMessage = apiError.error;
-        }
-      } else if (err && 'message' in err) {
-        errorMessage = err.message;
-      }
+      const errorMessage = getErrorMessage(err); // Use the utility function
       toast.error(`Error: ${errorMessage}`);
       setShowConfirmDeleteDialog(false);
     }
   };
 
-  // Function to handle borrow button click
+  // Function to handle borrow button click (opens borrow form dialog)
   const handleBorrowClick = (book: Book) => {
     setSelectedBookForBorrow(book);
     setShowBorrowDialog(true);
@@ -147,7 +127,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Dynamic Book List Section */}
+      {/* Dynamic Book List Section (Card View) */}
       <section className="px-4 text-center">
         <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-12">Our Book Collection</h2>
         <div className="flex justify-center mb-6">
@@ -196,7 +176,7 @@ const HomePage: React.FC = () => {
       <Dialog open={showConfirmDeleteDialog} onOpenChange={setShowConfirmDeleteDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Confirm Deialog</DialogTitle>
+            <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete this book? This action cannot be undone.
             </DialogDescription>
@@ -227,4 +207,5 @@ const HomePage: React.FC = () => {
     </div>
   );
 };
-export  default HomePage;
+
+export default HomePage;

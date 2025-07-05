@@ -17,9 +17,9 @@ import {
 } from '../ui/dialog';
 
 import { toast } from 'sonner';
-import { useCreateBorrowMutation } from '@/services/booksApi'; 
-import type { Book, IBorrowInput, ApiResponse } from '@/types';
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { useCreateBorrowMutation } from '@/services/booksApi';
+import type { Book, IBorrowInput } from '@/types';
+import { getErrorMessage } from '@/utils/typeGuards';
 
 interface BorrowBookFormProps {
   book: Book;
@@ -29,16 +29,14 @@ interface BorrowBookFormProps {
 
 export const BorrowBookForm: React.FC<BorrowBookFormProps> = ({ book, isOpen, onClose }) => {
   const [quantity, setQuantity] = useState(1);
-  const [dueDate, setDueDate] = useState<Date | undefined>(undefined); // Use Date type for Calendar
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [createBorrow, { isLoading }] = useCreateBorrowMutation();
 
-  // Reset form when dialog opens/closes or book changes
   useEffect(() => {
     if (isOpen) {
-      setQuantity(1); // Default to 1
-      // Set a default due date, e.g., 7 days from now
+      setQuantity(1);
       const defaultDueDate = new Date();
-      defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+      defaultDueDate.setDate(defaultDueDate.getDate() + 7); // Default to 7 days from now
       setDueDate(defaultDueDate);
     }
   }, [isOpen, book]);
@@ -62,39 +60,27 @@ export const BorrowBookForm: React.FC<BorrowBookFormProps> = ({ book, isOpen, on
       return;
     }
 
-    // Ensure due date is in the future
-    if (dueDate <= new Date()) {
-      toast.error('Due date must be in the future.');
+    // Ensure due date is in the future (or at least today if picking today is allowed)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
+    if (dueDate < today) {
+      toast.error('Due date cannot be in the past.');
       return;
     }
 
     const borrowData: IBorrowInput = {
       bookId: book._id,
       quantity: quantity,
-      dueDate: dueDate.toISOString(), // Convert Date object to ISO string for backend
+      dueDate: dueDate.toISOString(),
     };
 
     try {
       const result = await createBorrow(borrowData).unwrap();
       toast.success(result.message || 'Book borrowed successfully!');
-      onClose(); // Close the dialog on success
-
-      // Optionally, redirect to borrow summary page
-      // navigate('/borrow-summary'); // Requires useNavigate, pass it down or use in parent
+      onClose();
 
     } catch (err) {
-      let errorMessage = 'Failed to borrow book. Please try again.';
-      if (err && 'status' in err) {
-        const apiError = err as FetchBaseQueryError;
-        if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
-          const backendError = apiError.data as ApiResponse;
-          errorMessage = backendError.message || backendError.error || errorMessage;
-        } else if (typeof apiError.error === 'string') {
-          errorMessage = apiError.error;
-        }
-      } else if (err && 'message' in err) {
-        errorMessage = err.message;
-      }
+      const errorMessage = getErrorMessage(err);
       toast.error(`Error: ${errorMessage}`);
     }
   };
@@ -144,7 +130,6 @@ export const BorrowBookForm: React.FC<BorrowBookFormProps> = ({ book, isOpen, on
                   selected={dueDate}
                   onSelect={setDueDate}
                   initialFocus
-                  // Disable past dates
                   disabled={(date) => date < new Date() && date.toDateString() !== new Date().toDateString()}
                 />
               </PopoverContent>

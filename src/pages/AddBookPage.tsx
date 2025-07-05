@@ -6,11 +6,11 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Checkbox } from '../components/ui/checkbox';
 import { useCreateBookMutation } from '@/services/booksApi';
-import type { IBookInput, ApiResponse } from '../types/index';
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import type { IBookInput } from '../types/index';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/typeGuards';
 
-const AddBookPage: React.FC = () => {
+export const AddBookPage: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<IBookInput>({
     title: '',
@@ -22,7 +22,7 @@ const AddBookPage: React.FC = () => {
     imgUrl: '',
   });
   const [available, setAvailable] = useState<boolean>(true);
-  const [createBook, { isLoading, isError, error }] = useCreateBookMutation();
+  const [createBook, { isLoading }] = useCreateBookMutation();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -33,7 +33,7 @@ const AddBookPage: React.FC = () => {
     const value = Number(e.target.value);
     if (!isNaN(value) && value >= 0) {
       setFormData(prev => ({ ...prev, copies: value }));
-      setAvailable(value > 0);
+      setAvailable(value > 0); // Update availability based on copies
     }
   };
 
@@ -63,18 +63,7 @@ const AddBookPage: React.FC = () => {
       }, 1500);
 
     } catch (err) {
-      let errorMessage = 'Failed to add book. Please try again.';
-      if (err && 'status' in err) {
-        const apiError = err as FetchBaseQueryError;
-        if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
-          const backendError = apiError.data as ApiResponse;
-          errorMessage = backendError.message || backendError.error || errorMessage;
-        } else if (typeof apiError.error === 'string') {
-          errorMessage = apiError.error;
-        }
-      } else if (err && 'message' in err) {
-        errorMessage = err.message;
-      }
+      const errorMessage = getErrorMessage(err);
       toast.error(`Error: ${errorMessage}`);
     }
   };
@@ -125,4 +114,5 @@ const AddBookPage: React.FC = () => {
     </div>
   );
 };
+
 export default AddBookPage;

@@ -1,11 +1,11 @@
 import React from 'react';
-import { useGetBorrowSummaryQuery } from '@/services/booksApi'; // Assuming booksApi handles borrow summary
-import type { ApiResponse, IBorrowSummary } from '@/types';
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { useGetBorrowSummaryQuery } from '@/services/booksApi';
+import type { IBorrowSummary } from '@/types';
+import { getErrorMessage } from '@/utils/typeGuards';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
-const BorrowSummaryPage: React.FC = () => {
+export const BorrowSummaryPage: React.FC = () => {
   const { data: apiResponse, isLoading, isError, error } = useGetBorrowSummaryQuery();
 
   const borrowSummaries: IBorrowSummary[] | undefined = apiResponse?.data;
@@ -15,18 +15,7 @@ const BorrowSummaryPage: React.FC = () => {
   }
 
   if (isError) {
-    let errorMessage = 'An unknown error occurred while loading borrow summary.';
-    if (error && 'status' in error) {
-      const apiError = error as FetchBaseQueryError;
-      if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
-        const backendError = apiError.data as ApiResponse;
-        errorMessage = backendError.message || backendError.error || errorMessage;
-      } else if (typeof apiError.error === 'string') {
-        errorMessage = apiError.error;
-      }
-    } else if (error && 'message' in error) {
-      errorMessage = error.message;
-    }
+    const errorMessage = getErrorMessage(error);
     return <div className="p-4 text-center text-red-600 font-semibold">Error: {errorMessage}</div>;
   }
 
@@ -62,7 +51,7 @@ const BorrowSummaryPage: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {borrowSummaries.map((summary) => (
-                <tr key={summary._id} className="hover:bg-gray-50 transition-colors duration-150">
+                <tr key={summary._id.toString()} className="hover:bg-gray-50 transition-colors duration-150"> {/* Convert ObjectId to string */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{summary.bookTitle}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{summary.isbn}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{summary.totalQuantityBorrowed}</td>
@@ -77,4 +66,5 @@ const BorrowSummaryPage: React.FC = () => {
     </div>
   );
 };
+
 export default BorrowSummaryPage;

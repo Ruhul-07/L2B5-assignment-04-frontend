@@ -1,5 +1,5 @@
 import { baseApi } from '../redux/api/api';
-import type { Book, ApiResponse, IBookInput, IBorrow, IBorrowInput, IBorrowSummary } from '../types/index';
+import type { Book, ApiResponse, IBookInput, IBookUpdate, IBorrow, IBorrowInput, IBorrowSummary } from '../types/index';
 
 export const bookApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -11,7 +11,7 @@ export const bookApi = baseApi.injectEndpoints({
     // Query to get a single book by ID
     getBookById: builder.query<ApiResponse<Book>, string>({
       query: (id) => `/books/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Books', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Books', id }],
     }),
     // to create a new book
     createBook: builder.mutation<ApiResponse<Book>, IBookInput>({
@@ -22,22 +22,22 @@ export const bookApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Books'],
     }),
-    // Update a book
-    updateBook: builder.mutation<ApiResponse<Book>, { id: string; data: Partial<IBookInput> }>({
+    // to update an existing book
+    updateBook: builder.mutation<ApiResponse<Book>, { id: string; data: IBookUpdate }>({
       query: ({ id, data }) => ({
         url: `/books/${id}`,
         method: 'PATCH',
         body: data,
       }),
-      invalidatesTags: (_, _error, { id }) => [{ type: 'Books', id }],
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Books', id }],
     }),
-    // Delete sa book
+    // to delete a book
     deleteBook: builder.mutation<ApiResponse<void>, string>({
       query: (id) => ({
         url: `/books/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (_, _error, id) => [{ type: 'Books'}],
+      invalidatesTags: (_result, _error) => [{ type: 'Books'}],
     }),
     // to create a borrow record
     createBorrow: builder.mutation<ApiResponse<IBorrow>, IBorrowInput>({
@@ -48,7 +48,7 @@ export const bookApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Books', 'Borrows'],
     }),
-    // to get borrow summary
+    // Query to get borrow summary
     getBorrowSummary: builder.query<ApiResponse<IBorrowSummary[]>, void>({
       query: () => '/borrows/summary',
       providesTags: ['Borrows'],
@@ -57,7 +57,7 @@ export const bookApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
-// Export all my create hooks, including the new borrow hooks
+// Export all created hooks
 export const {
   useGetBooksQuery,
   useGetBookByIdQuery,

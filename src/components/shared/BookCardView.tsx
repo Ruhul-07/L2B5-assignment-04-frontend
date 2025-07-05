@@ -1,8 +1,6 @@
-// src/components/BookCardView.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../ui/button';
-
+import { Button } from '../ui/button'; 
 // Import types
 import type { Book } from '../../types/index';
 
@@ -14,7 +12,7 @@ interface BookCardViewProps {
   bookToDeleteId: string | null;
 }
 
-const BookCardView: React.FC<BookCardViewProps> = ({
+export const BookCardView: React.FC<BookCardViewProps> = ({
   books,
   handleDeleteClick,
   handleBorrowClick,
@@ -93,4 +91,3 @@ const BookCardView: React.FC<BookCardViewProps> = ({
     </div>
   );
 };
-export default BookCardView;

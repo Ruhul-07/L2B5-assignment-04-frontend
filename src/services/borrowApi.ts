@@ -11,7 +11,7 @@ export const bookApi = baseApi.injectEndpoints({
     // Query to get a single book by ID
     getBookById: builder.query<ApiResponse<Book>, string>({
       query: (id) => `/books/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Books', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Books', id }],
     }),
     // to create a new book
     createBook: builder.mutation<ApiResponse<Book>, IBookInput>({

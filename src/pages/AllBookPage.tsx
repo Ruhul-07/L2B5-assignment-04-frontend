@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { useGetBooksQuery, useDeleteBookMutation } from '@/services/booksApi';
 
 // Import types
-import type { Book, ApiResponse } from '../types/index';
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import type { Book } from '../types/index';
+import { getErrorMessage } from '@/utils/typeGuards';
 
 import {
   Dialog,
@@ -17,7 +17,9 @@ import {
   DialogTitle,
   DialogClose,
 } from '../components/ui/dialog';
+
 import { toast } from 'sonner';
+
 import { BorrowBookForm } from '@/components/shared/BorrowBookForm';
 
 export const AllBookPage: React.FC = () => {
@@ -44,18 +46,7 @@ export const AllBookPage: React.FC = () => {
 
   // Handle error state for fetching books
   if (isError) {
-    let errorMessage = 'An unknown error occurred while loading books.';
-    if (error && 'status' in error) {
-      const apiError = error as FetchBaseQueryError;
-      if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
-        const backendError = apiError.data as ApiResponse;
-        errorMessage = backendError.message || backendError.error || errorMessage;
-      } else if (typeof apiError.error === 'string') {
-        errorMessage = apiError.error;
-      }
-    } else if (error && 'message' in error) {
-      errorMessage = error.message;
-    }
+    const errorMessage = getErrorMessage(error); // Use the utility function
     return <div className="p-4 text-center text-red-600 font-semibold">Error: {errorMessage}</div>;
   }
 
@@ -88,18 +79,7 @@ export const AllBookPage: React.FC = () => {
       setShowConfirmDeleteDialog(false);
       setBookToDeleteId(null);
     } catch (err) {
-      let errorMessage = 'Failed to delete book.';
-      if (err && 'status' in err) {
-        const apiError = err as FetchBaseQueryError;
-        if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
-          const backendError = apiError.data as ApiResponse;
-          errorMessage = backendError.message || backendError.error || errorMessage;
-        } else if (typeof apiError.error === 'string') {
-          errorMessage = apiError.error;
-        }
-      } else if (err && 'message' in err) {
-        errorMessage = err.message;
-      }
+      const errorMessage = getErrorMessage(err); // Use the utility function
       toast.error(`Error: ${errorMessage}`);
       setShowConfirmDeleteDialog(false);
     }
@@ -118,7 +98,7 @@ export const AllBookPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">All Books</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">All Books (Table View)</h1>
 
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <Input

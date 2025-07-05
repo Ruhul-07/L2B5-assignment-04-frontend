@@ -6,13 +6,13 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Checkbox } from '../components/ui/checkbox';
 import { useGetBookByIdQuery, useUpdateBookMutation } from '@/services/booksApi';
-import type { IBookInput, ApiResponse, Book, IBookUpdate } from '../types/index';
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import type { IBookInput, Book, IBookUpdate } from '../types/index';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/typeGuards';
 
 export const EditBookPage: React.FC = () => {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>(); // Get book ID from URL parameters
+  const { id } = useParams<{ id: string }>();
 
   // Fetch existing book data
   const { data: apiResponse, isLoading, isError, error } = useGetBookByIdQuery(id!, {
@@ -20,7 +20,7 @@ export const EditBookPage: React.FC = () => {
   });
   const existingBook: Book | undefined = apiResponse?.data;
 
-  // Mutation hook for updating the book
+  // hook for updating the book
   const [updateBook, { isLoading: isUpdating }] = useUpdateBookMutation();
 
   // State for form data, initialized with default values
@@ -47,11 +47,11 @@ export const EditBookPage: React.FC = () => {
         description: existingBook.description,
         copies: existingBook.copies,
         imgUrl: existingBook.imgUrl,
-        available: existingBook.available,
+        available: existingBook.available, // Set from existing data
       });
-      setAvailable(existingBook.available);
+      setAvailable(existingBook.available); // Set checkbox state
     }
-  }, [existingBook]);
+  }, [existingBook]); // Re-run this effect when existingBook data changes
 
   // Handle loading state for fetching existing book
   if (isLoading) {
@@ -60,18 +60,7 @@ export const EditBookPage: React.FC = () => {
 
   // Handle error state for fetching existing book
   if (isError) {
-    let errorMessage = 'An unknown error occurred while loading book details.';
-    if (error && 'status' in error) {
-      const apiError = error as FetchBaseQueryError;
-      if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
-        const backendError = apiError.data as ApiResponse;
-        errorMessage = backendError.message || backendError.error || errorMessage;
-      } else if (typeof apiError.error === 'string') {
-        errorMessage = apiError.error;
-      }
-    } else if (error && 'message' in error) {
-      errorMessage = error.message;
-    }
+    const errorMessage = getErrorMessage(error);
     return <div className="p-4 text-center text-red-600 font-semibold">Error: {errorMessage}</div>;
   }
 
@@ -104,35 +93,25 @@ export const EditBookPage: React.FC = () => {
     const finalAvailable = formData.copies > 0 ? available : false;
 
     // Prepare data to send to the backend for update
-    const bookDataToUpdate: IBookUpdate = { // Use IBookUpdate for flexibility
+    const bookDataToUpdate: IBookUpdate = {
       ...formData,
-      imgUrl: formData.imgUrl || 'https://placehold.co/150x200/cccccc/333333?text=No+Image', // Ensure imgUrl is always sent
+      imgUrl: formData.imgUrl || 'https://placehold.co/150x200/cccccc/333333?text=No+Image',
       available: finalAvailable,
     };
 
     try {
+      // Execute the update mutation with the book ID and updated data
       const result = await updateBook({ id: id, data: bookDataToUpdate }).unwrap();
-      toast.success(result.message || 'Book updated successfully!');
-      
+      toast.success(result.message || 'Book updated successfully!'); // Show success toast
+
+      // Redirect back to the book list after a short delay
       setTimeout(() => {
-        navigate('/books');
+        navigate('/books'); // Redirect to the table view
       }, 1500);
 
     } catch (err) {
-      // Handle API errors and display a toast notification
-      let errorMessage = 'Failed to update book. Please try again.';
-      if (err && 'status' in err) {
-        const apiError = err as FetchBaseQueryError;
-        if (apiError.data && typeof apiError.data === 'object' && apiError.data !== null) {
-          const backendError = apiError.data as ApiResponse;
-          errorMessage = backendError.message || backendError.error || errorMessage;
-        } else if (typeof apiError.error === 'string') {
-          errorMessage = apiError.error;
-        }
-      } else if (err && 'message' in err) {
-        errorMessage = err.message;
-      }
-      toast.error(`Error: ${errorMessage}`); // Show error toast
+      const errorMessage = getErrorMessage(err); 
+      toast.error(`Error: ${errorMessage}`);
     }
   };
 
@@ -182,3 +161,5 @@ export const EditBookPage: React.FC = () => {
     </div>
   );
 };
+
+export default EditBookPage;
